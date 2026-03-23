@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import StatusBadge from "@/components/StatusBadge";
 
 const tabs = [
@@ -8,20 +8,82 @@ const tabs = [
   { key: "received", label: "Fully Received", count: 241 }, { key: "cancelled", label: "Cancelled", count: 6 },
 ];
 
-const pos = [
-  { po: "PO-2026-0498", vendor: "Reliance Polymers", date: "20 Mar 2026", delivery: "27 Mar 2026", value: "₹4.10L", items: 2, received: 0, payment: "Pending", status: "Ordered" },
-  { po: "PO-2026-0495", vendor: "Rashtriya Chemicals", date: "18 Mar 2026", delivery: "1 Apr 2026", value: "₹72,500", items: 1, received: 0, payment: "Pending", status: "Ordered" },
-  { po: "PO-2026-0490", vendor: "Galaxy Surfactants", date: "15 Mar 2026", delivery: "22 Mar 2026", value: "₹2.22L", items: 2, received: 65, payment: "Partial", status: "Partially Received" },
-  { po: "PO-2026-0488", vendor: "Aarti Industries", date: "14 Mar 2026", delivery: "24 Mar 2026", value: "₹1.68L", items: 1, received: 100, payment: "Paid", status: "Fully Received" },
-  { po: "PO-2026-0485", vendor: "Mold-Tek Containers", date: "12 Mar 2026", delivery: "17 Mar 2026", value: "₹4.20L", items: 3, received: 100, payment: "Paid", status: "Fully Received" },
-  { po: "PO-2026-0482", vendor: "Tronox India", date: "10 Mar 2026", delivery: "16 Mar 2026", value: "₹6.40L", items: 1, received: 80, payment: "Partial", status: "Partially Received" },
-  { po: "PO-2026-0478", vendor: "Uflex Packaging", date: "8 Mar 2026", delivery: "12 Mar 2026", value: "₹1.85L", items: 4, received: 100, payment: "Paid", status: "Fully Received" },
-  { po: "PO-2026-0475", vendor: "Deepak Nitrite", date: "5 Mar 2026", delivery: "10 Mar 2026", value: "₹1.14L", items: 2, received: 100, payment: "Paid", status: "Fully Received" },
-  { po: "PO-2026-0500", vendor: "Givaudan India", date: "22 Mar 2026", delivery: "1 Apr 2026", value: "₹2.80L", items: 1, received: 0, payment: "Pending", status: "Pending Approval" },
-  { po: "PO-2026-0501", vendor: "Gujarat Alkalies", date: "23 Mar 2026", delivery: "28 Mar 2026", value: "₹22,000", items: 1, received: 0, payment: "Pending", status: "Draft" },
-  { po: "PO-2026-0472", vendor: "SRF Limited", date: "3 Mar 2026", delivery: "10 Mar 2026", value: "₹3.45L", items: 2, received: 100, payment: "Paid", status: "Fully Received" },
-  { po: "PO-2026-0468", vendor: "Hindustan Zinc", date: "1 Mar 2026", delivery: "8 Mar 2026", value: "₹5.20L", items: 1, received: 100, payment: "Paid", status: "Fully Received" },
+const VENDORS = [
+  "Reliance Polymers", "Rashtriya Chemicals", "Galaxy Surfactants", "Aarti Industries",
+  "Mold-Tek Containers", "Tronox India", "Uflex Packaging", "Deepak Nitrite",
+  "Givaudan India", "Gujarat Alkalies", "SRF Limited", "Hindustan Zinc",
+  "Pidilite Industries", "Tata Chemicals", "Bayer CropScience", "Atul Ltd"
 ];
+
+const generateMockPOs = () => {
+  const result = [];
+  let poCounter = 1000;
+  
+  // Seed for deterministic random to avoid jumping on every render
+  let seed = 12345;
+  const random = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+
+  const addItems = (count: number, status: string) => {
+    for (let i = 0; i < count; i++) {
+        poCounter--;
+        const vendor = VENDORS[Math.floor(random() * VENDORS.length)];
+        const items = Math.floor(random() * 5) + 1;
+        
+        let received = 0;
+        let payment = "Pending";
+        
+        if (status === "Fully Received") {
+            received = 100;
+            payment = "Paid";
+        } else if (status === "Partially Received") {
+            received = Math.floor(random() * 80) + 10;
+            payment = "Partial";
+        } else if (status === "Cancelled") {
+            received = 0;
+            payment = "Pending";
+        }
+        
+        // Random days ago for order date
+        const dateObj = new Date(2026, 2, 25 - Math.floor(random() * 60)); 
+        const deliveryObj = new Date(dateObj.getTime() + (Math.floor(random() * 15) + 5) * 86400000);
+        
+        const dateStr = dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(/ /g, " ");
+        const deliveryStr = deliveryObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(/ /g, " ");
+        
+        const valueLakhs = (random() * 10 + 0.5).toFixed(2);
+        const value = `₹${valueLakhs}L`;
+        
+        result.push({
+            po: `PO-2026-${String(poCounter).padStart(4, '0')}`,
+            vendor,
+            date: dateStr,
+            delivery: deliveryStr,
+            value,
+            items,
+            received,
+            payment,
+            status,
+            _timestamp: dateObj.getTime()
+        });
+    }
+  };
+
+  addItems(8, "Draft");
+  addItems(12, "Pending Approval");
+  addItems(24, "Approved");
+  addItems(87, "Ordered");
+  addItems(34, "Partially Received");
+  addItems(241, "Fully Received");
+  addItems(6, "Cancelled");
+
+  // Sort by date descending
+  return result.sort((a, b) => b._timestamp - a._timestamp).map(({ _timestamp, ...rest }) => rest);
+};
+
+const allPOs = generateMockPOs();
 
 const statusMap: Record<string, "green" | "amber" | "red" | "blue" | "gray"> = {
   "Draft": "gray", "Pending Approval": "amber", "Approved": "blue", "Ordered": "blue",
@@ -30,6 +92,13 @@ const statusMap: Record<string, "green" | "amber" | "red" | "blue" | "gray"> = {
 
 export default function PurchaseOrders() {
   const [tab, setTab] = useState("all");
+
+  const filteredPOs = useMemo(() => {
+    if (tab === "all") return allPOs;
+    const tabData = tabs.find(t => t.key === tab);
+    if (!tabData) return allPOs;
+    return allPOs.filter(po => po.status === tabData.label);
+  }, [tab]);
 
   return (
     <div className="p-6 space-y-4">
@@ -53,7 +122,7 @@ export default function PurchaseOrders() {
               )}
             </tr></thead>
             <tbody>
-              {pos.map((p, i) => (
+              {filteredPOs.map((p, i) => (
                 <tr key={i} className="border-b border-border hover:bg-secondary/30 cursor-pointer">
                   <td className="px-3 py-2 font-mono text-xs text-accent">{p.po}</td>
                   <td className="px-3 py-2 font-medium">{p.vendor}</td>
@@ -68,6 +137,9 @@ export default function PurchaseOrders() {
               ))}
             </tbody>
           </table>
+          {filteredPOs.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">No data found.</div>
+          )}
         </div>
       </div>
     </div>

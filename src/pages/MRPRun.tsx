@@ -81,8 +81,10 @@ export default function MRPRun() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              tab === key ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"
+            className={`-mb-px px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              tab === key
+                ? "border-accent text-accent"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {label}
