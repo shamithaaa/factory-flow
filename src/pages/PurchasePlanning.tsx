@@ -23,7 +23,7 @@ export default function PurchasePlanning() {
       <h2 className="text-lg font-semibold animate-fade-in-up">Purchase Planning</h2>
       <div className="grid grid-cols-3 gap-4 animate-fade-in-up stagger-1">
         <KPICard title="Pending Requisitions" value="47" subtitle="₹2.8 Cr" icon={ClipboardList} status="amber" />
-        <KPICard title="Planned POs to Raise" value="89" subtitle="₹6.1 Cr" icon={ShoppingCart} status="blue" />
+        <KPICard title="Planned POs to Raise" value="89" subtitle="₹6.1 Cr" icon={ShoppingCart} status="amber" />
         <KPICard title="Overdue POs" value="6" icon={AlertTriangle} status="red" />
       </div>
       <div className="bg-card rounded-lg border border-border overflow-hidden animate-fade-in-up stagger-2">
