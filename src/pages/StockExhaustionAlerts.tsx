@@ -1,24 +1,76 @@
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "@/components/StatusBadge";
 
-const alerts = [
-  { level: "red" as const, levelLabel: "Critical", material: "Stearic Acid", warehouse: "Pune Plant", stock: "180 kg", daily: "42 kg/d", days: 4.3, reqBy: "27 Mar 2026", reorderBy: "Immediate", lead: 14, vendor: "Rashtriya Chemicals" },
-  { level: "red" as const, levelLabel: "Critical", material: "Fragrance Blend FG-04", warehouse: "Mumbai WH", stock: "22 L", daily: "6 L/d", days: 3.7, reqBy: "27 Mar 2026", reorderBy: "Immediate", lead: 10, vendor: "Givaudan India" },
-  { level: "red" as const, levelLabel: "Critical", material: "EDTA Disodium Salt", warehouse: "Pune Plant", stock: "95 kg", daily: "18 kg/d", days: 5.3, reqBy: "28 Mar 2026", reorderBy: "Immediate", lead: 10, vendor: "Aarti Industries" },
-  { level: "red" as const, levelLabel: "Critical", material: "Shrink Labels (Type B)", warehouse: "Pune Plant", stock: "1,200 pcs", daily: "320 pcs/d", days: 3.8, reqBy: "27 Mar 2026", reorderBy: "Immediate", lead: 4, vendor: "Uflex Packaging" },
-  { level: "red" as const, levelLabel: "Critical", material: "Pine Oil", warehouse: "Chennai Hub", stock: "45 L", daily: "12 L/d", days: 3.8, reqBy: "27 Mar 2026", reorderBy: "Immediate", lead: 8, vendor: "Camphor & Allied" },
-  { level: "red" as const, levelLabel: "Critical", material: "Methyl Salicylate", warehouse: "Pune Plant", stock: "28 kg", daily: "8 kg/d", days: 3.5, reqBy: "27 Mar 2026", reorderBy: "Immediate", lead: 12, vendor: "Jayant Agro" },
-  { level: "red" as const, levelLabel: "Critical", material: "Preservative BKC-50", warehouse: "Delhi Depot", stock: "15 L", daily: "4 L/d", days: 3.8, reqBy: "27 Mar 2026", reorderBy: "Immediate", lead: 7, vendor: "Thor Specialties" },
-  { level: "amber" as const, levelLabel: "High", material: "Titanium Dioxide", warehouse: "Pune Plant", stock: "640 kg", daily: "78 kg/d", days: 8.2, reqBy: "31 Mar 2026", reorderBy: "25 Mar 2026", lead: 6, vendor: "Tronox India" },
-  { level: "amber" as const, levelLabel: "High", material: "Citric Acid Monohydrate", warehouse: "Pune Plant", stock: "380 kg", daily: "35 kg/d", days: 10.9, reqBy: "3 Apr 2026", reorderBy: "26 Mar 2026", lead: 8, vendor: "Jungbunzlauer India" },
-  { level: "amber" as const, levelLabel: "High", material: "Polypropylene Granules", warehouse: "Mumbai WH", stock: "1,800 kg", daily: "280 kg/d", days: 6.4, reqBy: "29 Mar 2026", reorderBy: "23 Mar 2026", lead: 7, vendor: "Reliance Polymers" },
-  { level: "amber" as const, levelLabel: "High", material: "Sodium Hypochlorite", warehouse: "Pune Plant", stock: "680 L", daily: "85 L/d", days: 8.0, reqBy: "31 Mar 2026", reorderBy: "26 Mar 2026", lead: 5, vendor: "Gujarat Alkalies" },
-  { level: "amber" as const, levelLabel: "High", material: "Shrink Labels (Type A)", warehouse: "Pune Plant", stock: "4,500 pcs", daily: "480 pcs/d", days: 9.4, reqBy: "2 Apr 2026", reorderBy: "29 Mar 2026", lead: 4, vendor: "Uflex Packaging" },
-  { level: "amber" as const, levelLabel: "High", material: "LDPE Caps 5L", warehouse: "Mumbai WH", stock: "2,200 pcs", daily: "350 pcs/d", days: 6.3, reqBy: "30 Mar 2026", reorderBy: "25 Mar 2026", lead: 5, vendor: "Mold-Tek Containers" },
+const MATERIALS = [
+  "Stearic Acid", "Fragrance Blend FG-04", "EDTA Disodium Salt", "Shrink Labels (Type B)",
+  "Pine Oil", "Methyl Salicylate", "Preservative BKC-50", "Titanium Dioxide",
+  "Citric Acid Monohydrate", "Polypropylene Granules", "Sodium Hypochlorite",
+  "Shrink Labels (Type A)", "LDPE Caps 5L", "Caustic Soda Flakes", "Isopropyl Alcohol"
 ];
+
+const WAREHOUSES = ["Pune Plant", "Mumbai WH", "Delhi Depot", "Chennai Hub"];
+const VENDORS = [
+  "Rashtriya Chemicals", "Givaudan India", "Aarti Industries", "Uflex Packaging",
+  "Camphor & Allied", "Jayant Agro", "Thor Specialties", "Tronox India",
+  "Jungbunzlauer India", "Reliance Polymers", "Gujarat Alkalies", "Mold-Tek Containers"
+];
+
+const generateAlerts = () => {
+  const result: any[] = [];
+  let seed = 777;
+  const random = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+
+  const addAlerts = (count: number, level: string, levelLabel: string, minDays: number, maxDays: number) => {
+    for (let i = 0; i < count; i++) {
+      const material = MATERIALS[Math.floor(random() * MATERIALS.length)];
+      const warehouse = WAREHOUSES[Math.floor(random() * WAREHOUSES.length)];
+      const isKg = random() > 0.4;
+      const dailyUsage = Math.floor(random() * 200) + 10;
+      const days = minDays + random() * (maxDays - minDays);
+      const stock = Math.floor(dailyUsage * days);
+      const lead = Math.floor(random() * 12) + 3;
+      const vendor = VENDORS[Math.floor(random() * VENDORS.length)];
+
+      const reqObj = new Date(2026, 2, 23 + Math.floor(days));
+      const reqBy = reqObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(/ /g, " ");
+
+      let reorderBy;
+      if (levelLabel === "Critical") {
+        reorderBy = "Immediate";
+      } else {
+        const reorderObj = new Date(reqObj.getTime() - lead * 86400000);
+        reorderBy = reorderObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(/ /g, " ");
+      }
+
+      result.push({
+        level, levelLabel, material, warehouse,
+        stock: `${stock.toLocaleString()} ${isKg ? 'kg' : 'L'}`,
+        daily: `${dailyUsage} ${isKg ? 'kg' : 'L'}/d`,
+        days: parseFloat(days.toFixed(1)),
+        reqBy, reorderBy, lead, vendor,
+        _days: days // for sorting
+      });
+    }
+  };
+
+  addAlerts(7, "red", "Critical", 0.5, 2.9);
+  addAlerts(12, "amber", "High", 3.0, 7.0);
+  addAlerts(23, "amber", "Medium", 7.1, 14.0);
+
+  return result.sort((a, b) => a._days - b._days).map(({ _days, ...rest }) => rest);
+};
+
+const alerts = generateAlerts();
 
 export default function StockExhaustionAlerts() {
   const navigate = useNavigate();
+
+  const counts = {
+    critical: alerts.filter(a => a.levelLabel === "Critical").length,
+    high: alerts.filter(a => a.levelLabel === "High").length,
+    medium: alerts.filter(a => a.levelLabel === "Medium").length,
+    total: alerts.length
+  };
 
   return (
     <div className="p-6 space-y-4">
@@ -29,10 +81,10 @@ export default function StockExhaustionAlerts() {
 
       <div className="grid grid-cols-4 gap-3 animate-fade-in-up stagger-1">
         {[
-          { label: "Critical (< 3 days)", count: 7, color: "bg-danger/10 text-danger border-danger/20" },
-          { label: "High (3–7 days)", count: 12, color: "bg-warning/10 text-warning border-warning/20" },
-          { label: "Medium (7–14 days)", count: 23, color: "bg-accent/10 text-accent border-accent/20" },
-          { label: "Total Active Alerts", count: 42, color: "bg-secondary text-foreground border-border" },
+          { label: "Critical (< 3 days)", count: counts.critical, color: "bg-danger/10 text-danger border-danger/20" },
+          { label: "High (3–7 days)", count: counts.high, color: "bg-warning/10 text-warning border-warning/20" },
+          { label: "Medium (7–14 days)", count: counts.medium, color: "bg-accent/10 text-accent border-accent/20" },
+          { label: "Total Active Alerts", count: counts.total, color: "bg-secondary text-foreground border-border" },
         ].map((s) => (
           <div key={s.label} className={`rounded-lg border p-3 ${s.color}`}>
             <div className="text-2xl font-bold tabular-nums">{s.count}</div>

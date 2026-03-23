@@ -1,30 +1,77 @@
 import { useState } from "react";
 import StatusBadge from "@/components/StatusBadge";
 
-const statusTabs = [
-  { key: "all", label: "All", count: 234 },
-  { key: "draft", label: "Draft", count: 18 },
-  { key: "released", label: "Released", count: 67 },
-  { key: "inprogress", label: "In Progress", count: 41 },
-  { key: "completed", label: "Completed", count: 108 },
-  { key: "onhold", label: "On Hold", count: 12 },
-  { key: "overdue", label: "Overdue", count: 6 },
+const tabsConfig = [
+  { key: "all", label: "All" },
+  { key: "draft", label: "Draft" },
+  { key: "released", label: "Released" },
+  { key: "inprogress", label: "In Progress" },
+  { key: "completed", label: "Completed" },
+  { key: "onhold", label: "On Hold" },
+  { key: "overdue", label: "Overdue" },
 ];
 
-const workOrders = [
-  { wo: "WO-2026-0847", product: "Industrial Cleaner 5L", ordered: 2000, produced: 0, bom: "v3.2", scheduled: "24 Mar 2026", due: "24 Mar 2026", line: "Line 3", supervisor: "Suresh P.", material: "green" as const, status: "Released" },
-  { wo: "WO-2026-0848", product: "Floor Polish 1L", ordered: 5000, produced: 0, bom: "v2.1", scheduled: "24 Mar 2026", due: "25 Mar 2026", line: "Line 1", supervisor: "Anita D.", material: "amber" as const, status: "Released" },
-  { wo: "WO-2026-0849", product: "Dish Wash Liquid 500ml", ordered: 8000, produced: 0, bom: "v4.0", scheduled: "25 Mar 2026", due: "25 Mar 2026", line: "Line 2", supervisor: "Mohan K.", material: "red" as const, status: "At Risk" },
-  { wo: "WO-2026-0840", product: "Hand Wash 250ml", ordered: 10000, produced: 6200, bom: "v1.5", scheduled: "22 Mar 2026", due: "23 Mar 2026", line: "Line 4", supervisor: "Ramesh T.", material: "green" as const, status: "In Progress" },
-  { wo: "WO-2026-0835", product: "Glass Cleaner 1L", ordered: 3000, produced: 3000, bom: "v2.0", scheduled: "20 Mar 2026", due: "21 Mar 2026", line: "Line 3", supervisor: "Suresh P.", material: "green" as const, status: "Completed" },
-  { wo: "WO-2026-0838", product: "Toilet Cleaner 500ml", ordered: 6000, produced: 6000, bom: "v3.1", scheduled: "21 Mar 2026", due: "22 Mar 2026", line: "Line 2", supervisor: "Mohan K.", material: "green" as const, status: "Completed" },
-  { wo: "WO-2026-0830", product: "Surface Disinfectant 5L", ordered: 1500, produced: 750, bom: "v1.2", scheduled: "19 Mar 2026", due: "20 Mar 2026", line: "Line 1", supervisor: "Anita D.", material: "green" as const, status: "On Hold" },
-  { wo: "WO-2026-0825", product: "Multi-Surface Cleaner 1L", ordered: 4000, produced: 1200, bom: "v2.3", scheduled: "18 Mar 2026", due: "19 Mar 2026", line: "Line 3", supervisor: "Suresh P.", material: "amber" as const, status: "Overdue" },
-  { wo: "WO-2026-0820", product: "Fabric Softener 1L", ordered: 3500, produced: 3500, bom: "v1.0", scheduled: "17 Mar 2026", due: "18 Mar 2026", line: "Line 4", supervisor: "Ramesh T.", material: "green" as const, status: "Completed" },
-  { wo: "WO-2026-0818", product: "Bathroom Cleaner 500ml", ordered: 7000, produced: 7000, bom: "v2.8", scheduled: "16 Mar 2026", due: "17 Mar 2026", line: "Line 2", supervisor: "Mohan K.", material: "green" as const, status: "Completed" },
-  { wo: "WO-2026-0815", product: "Kitchen Degreaser 1L", ordered: 2500, produced: 0, bom: "v1.1", scheduled: "29 Mar 2026", due: "30 Mar 2026", line: "Line 1", supervisor: "Anita D.", material: "green" as const, status: "Draft" },
-  { wo: "WO-2026-0812", product: "Phenyl White 5L", ordered: 3000, produced: 800, bom: "v3.0", scheduled: "18 Mar 2026", due: "19 Mar 2026", line: "Line 4", supervisor: "Ramesh T.", material: "amber" as const, status: "Overdue" },
+const PRODUCTS = [
+  "Industrial Cleaner 5L", "Floor Polish 1L", "Dish Wash Liquid 500ml",
+  "Hand Wash 250ml", "Glass Cleaner 1L", "Toilet Cleaner 500ml",
+  "Surface Disinfectant 5L", "Multi-Surface Cleaner 1L", "Fabric Softener 1L",
+  "Bathroom Cleaner 500ml", "Kitchen Degreaser 1L", "Phenyl White 5L"
 ];
+
+const SUPERVISORS = ["Suresh P.", "Anita D.", "Mohan K.", "Ramesh T."];
+
+const generateMockWOs = () => {
+  const result: any[] = [];
+  let woCounter = 847;
+  
+  let seed = 42;
+  const random = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+
+  const addItems = (count: number, status: string, material: string) => {
+    for (let i = 0; i < count; i++) {
+        woCounter++;
+        const product = PRODUCTS[Math.floor(random() * PRODUCTS.length)];
+        const ordered = (Math.floor(random() * 10) + 1) * 1000;
+        
+        let produced = 0;
+        if (status === "Completed") produced = ordered;
+        else if (status === "In Progress" || status === "On Hold" || status === "Overdue" || status === "At Risk") {
+          produced = Math.floor(random() * ordered);
+        }
+        
+        const bom = `v${Math.floor(random() * 4) + 1}.${Math.floor(random() * 5)}`;
+        const line = `Line ${Math.floor(random() * 4) + 1}`;
+        const supervisor = SUPERVISORS[Math.floor(random() * SUPERVISORS.length)];
+        
+        const dateObj = new Date(2026, 2, 25 - Math.floor(random() * 30)); 
+        const dueObj = new Date(dateObj.getTime() + (Math.floor(random() * 5) + 1) * 86400000);
+        
+        const scheduled = dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(/ /g, " ");
+        const due = dueObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(/ /g, " ");
+        
+        result.push({
+            wo: `WO-2026-${String(woCounter).padStart(4, '0')}`,
+            product, ordered, produced, bom, scheduled, due, line, supervisor, material, status,
+            _timestamp: dateObj.getTime()
+        });
+    }
+  };
+
+  addItems(18, "Draft", "gray");
+  addItems(67, "Released", "blue");
+  addItems(41, "In Progress", "amber");
+  addItems(90, "Completed", "green"); // Adjusted to exactly make sum 234
+  addItems(12, "On Hold", "gray");
+  addItems(4, "Overdue", "red");
+  addItems(2, "At Risk", "red"); // Overdue + At Risk sum to 6
+
+  return result.sort((a, b) => b._timestamp - a._timestamp).map(({ _timestamp, ...rest }) => rest);
+};
+
+const workOrders = generateMockWOs();
 
 const statusColorMap: Record<string, "green" | "amber" | "red" | "blue" | "gray"> = {
   "Released": "blue",
@@ -39,28 +86,34 @@ const statusColorMap: Record<string, "green" | "amber" | "red" | "blue" | "gray"
 export default function WorkOrders() {
   const [activeTab, setActiveTab] = useState("all");
 
+  const filterMap: Record<string, string[]> = {
+    draft: ["Draft"], released: ["Released"], inprogress: ["In Progress"],
+    completed: ["Completed"], onhold: ["On Hold"], overdue: ["Overdue", "At Risk"],
+  };
+
   const filtered = activeTab === "all" ? workOrders : workOrders.filter((wo) => {
-    const map: Record<string, string[]> = {
-      draft: ["Draft"], released: ["Released"], inprogress: ["In Progress"],
-      completed: ["Completed"], onhold: ["On Hold"], overdue: ["Overdue", "At Risk"],
-    };
-    return map[activeTab]?.includes(wo.status);
+    return filterMap[activeTab]?.includes(wo.status);
   });
+
+  const getCount = (key: string) => {
+    if (key === "all") return workOrders.length;
+    return workOrders.filter(wo => filterMap[key]?.includes(wo.status)).length;
+  };
 
   return (
     <div className="p-6 space-y-4">
       <h2 className="text-lg font-semibold animate-fade-in-up">Work Orders</h2>
 
-      <div className="flex gap-1 border-b border-border animate-fade-in-up stagger-1">
-        {statusTabs.map((t) => (
+      <div className="flex gap-1 border-b border-border overflow-x-auto animate-fade-in-up stagger-1">
+        {tabsConfig.map((t) => (
           <button
             key={t.key}
             onClick={() => setActiveTab(t.key)}
-            className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+            className={`px-3 py-2 text-xs font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === t.key ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t.label} ({t.count})
+            {t.label} ({getCount(t.key)})
           </button>
         ))}
       </div>

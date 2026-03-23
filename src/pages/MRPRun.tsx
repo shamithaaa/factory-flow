@@ -2,33 +2,80 @@ import { useState } from "react";
 import { Zap, Clock, AlertTriangle, CheckCircle, Filter } from "lucide-react";
 import StatusBadge from "@/components/StatusBadge";
 
-const plannedOrders = [
-  { code: "RM-1042", name: "Polypropylene Granules", warehouse: "Pune Plant", qty: "5,000 kg", orderDate: "29 Mar 2026", reqDate: "5 Apr 2026", vendor: "Reliance Polymers", lead: 7, status: "planned" },
-  { code: "RM-2087", name: "Stearic Acid", warehouse: "Pune Plant", qty: "500 kg", orderDate: "Immediate", reqDate: "27 Mar 2026", vendor: "Rashtriya Chemicals", lead: 14, status: "exception" },
-  { code: "RM-3011", name: "HDPE Resin", warehouse: "Mumbai WH", qty: "8,000 kg", orderDate: "1 Apr 2026", reqDate: "8 Apr 2026", vendor: "GAIL India", lead: 7, status: "firmed" },
-  { code: "RM-4023", name: "Sodium Lauryl Sulphate", warehouse: "Pune Plant", qty: "1,200 kg", orderDate: "26 Mar 2026", reqDate: "2 Apr 2026", vendor: "Galaxy Surfactants", lead: 7, status: "planned" },
-  { code: "RM-5018", name: "EDTA Disodium Salt", warehouse: "Pune Plant", qty: "300 kg", orderDate: "Immediate", reqDate: "28 Mar 2026", vendor: "Aarti Industries", lead: 10, status: "exception" },
-  { code: "RM-6031", name: "Titanium Dioxide", warehouse: "Chennai Hub", qty: "2,000 kg", orderDate: "27 Mar 2026", reqDate: "3 Apr 2026", vendor: "Tronox India", lead: 6, status: "planned" },
-  { code: "PM-1001", name: "HDPE Bottle 5L", warehouse: "Pune Plant", qty: "10,000 pcs", orderDate: "28 Mar 2026", reqDate: "4 Apr 2026", vendor: "Mold-Tek Containers", lead: 5, status: "firmed" },
-  { code: "PM-1002", name: "Shrink Labels (Type A)", warehouse: "Mumbai WH", qty: "25,000 pcs", orderDate: "30 Mar 2026", reqDate: "6 Apr 2026", vendor: "Uflex Packaging", lead: 4, status: "planned" },
-  { code: "RM-7044", name: "Demineralised Water", warehouse: "Pune Plant", qty: "15,000 L", orderDate: "25 Mar 2026", reqDate: "28 Mar 2026", vendor: "Aqua Pure Systems", lead: 2, status: "firmed" },
-  { code: "RM-8012", name: "Fragrance Blend FG-04", warehouse: "Pune Plant", qty: "200 L", orderDate: "Immediate", reqDate: "27 Mar 2026", vendor: "Givaudan India", lead: 10, status: "exception" },
-  { code: "PM-2003", name: "Foil Seals 5L", warehouse: "Pune Plant", qty: "15,000 pcs", orderDate: "29 Mar 2026", reqDate: "5 Apr 2026", vendor: "Bilcare Solutions", lead: 5, status: "planned" },
-  { code: "RM-9055", name: "Caustic Soda Flakes", warehouse: "Delhi Depot", qty: "3,000 kg", orderDate: "28 Mar 2026", reqDate: "4 Apr 2026", vendor: "Deepak Nitrite", lead: 5, status: "planned" },
-  { code: "RM-1066", name: "Citric Acid Monohydrate", warehouse: "Pune Plant", qty: "800 kg", orderDate: "30 Mar 2026", reqDate: "8 Apr 2026", vendor: "Jungbunzlauer India", lead: 8, status: "planned" },
-  { code: "PM-3004", name: "Corrugated Cartons (5L x6)", warehouse: "Pune Plant", qty: "5,000 pcs", orderDate: "1 Apr 2026", reqDate: "7 Apr 2026", vendor: "Packman Industries", lead: 3, status: "firmed" },
-  { code: "RM-1177", name: "Isopropyl Alcohol", warehouse: "Mumbai WH", qty: "600 L", orderDate: "27 Mar 2026", reqDate: "31 Mar 2026", vendor: "Deepak Fertilisers", lead: 4, status: "planned" },
+const RAW_MATERIALS = [
+  "Polypropylene Granules", "Stearic Acid", "HDPE Resin", "Sodium Lauryl Sulphate",
+  "EDTA Disodium Salt", "Titanium Dioxide", "Demineralised Water", "Fragrance Blend FG-04",
+  "Caustic Soda Flakes", "Citric Acid Monohydrate", "Isopropyl Alcohol"
 ];
 
-const exceptions = [
-  { type: "Material Shortage", material: "Stearic Acid (RM-2087)", severity: "high", action: "Place emergency PO — 500 kg required by 27 Mar", assigned: "Priya S." },
-  { type: "Late Delivery Risk", material: "Fragrance Blend FG-04 (RM-8012)", severity: "high", action: "Expedite with Givaudan India — current ETA 4 Apr", assigned: "Vikram T." },
-  { type: "BOM Missing", material: "Anti-Bacterial Compound V2", severity: "medium", action: "BOM not defined — cannot plan materials", assigned: "Rajesh K." },
-  { type: "Material Shortage", material: "EDTA Disodium Salt (RM-5018)", severity: "high", action: "Place emergency PO — 300 kg shortfall", assigned: "Priya S." },
-  { type: "Excess Stock", material: "LDPE Granules (RM-3045)", severity: "low", action: "Reduce safety stock — 45 days coverage on hand", assigned: "Arun M." },
-  { type: "Late Delivery Risk", material: "Titanium Dioxide (RM-6031)", severity: "medium", action: "Vendor delayed — new ETA 5 Apr (was 3 Apr)", assigned: "Vikram T." },
-  { type: "Material Shortage", material: "Shrink Labels Type B (PM-2008)", severity: "medium", action: "Alternate vendor available — Switch to PrintPack India", assigned: "Priya S." },
+const PKG_MATERIALS = [
+  "HDPE Bottle 5L", "Shrink Labels (Type A)", "Foil Seals 5L", "Corrugated Cartons (5L x6)"
 ];
+
+const VENDORS = [
+  "Reliance Polymers", "Rashtriya Chemicals", "GAIL India", "Galaxy Surfactants",
+  "Aarti Industries", "Tronox India", "Aqua Pure Systems", "Givaudan India",
+  "Mold-Tek Containers", "Uflex Packaging", "Bilcare Solutions", "Packman Industries"
+];
+
+const WAREHOUSES = ["Pune Plant", "Mumbai WH", "Chennai Hub", "Delhi Depot"];
+
+const generatePlannedOrders = () => {
+  const result: any[] = [];
+  let seed = 123;
+  const random = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+
+  for (let i = 0; i < 312; i++) {
+    const isRm = random() > 0.3;
+    const material = isRm ? RAW_MATERIALS[Math.floor(random() * RAW_MATERIALS.length)] : PKG_MATERIALS[Math.floor(random() * PKG_MATERIALS.length)];
+    const code = `${isRm ? 'RM' : 'PM'}-${1000 + i}`;
+    const warehouse = WAREHOUSES[Math.floor(random() * WAREHOUSES.length)];
+    const qty = `${(Math.floor(random() * 50) + 1) * 100} ${isRm && material !== "Demineralised Water" && material !== "Fragrance Blend FG-04" && material !== "Isopropyl Alcohol" ? 'kg' : isRm ? 'L' : 'pcs'}`;
+    const vendor = VENDORS[Math.floor(random() * VENDORS.length)];
+    const lead = Math.floor(random() * 14) + 2;
+
+    const dateObj = new Date(2026, 2, 25 + Math.floor(random() * 5)); 
+    const reqObj = new Date(dateObj.getTime() + (lead + Math.floor(random() * 3)) * 86400000);
+    
+    const orderDate = dateObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(/ /g, " ");
+    const reqDate = reqObj.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(/ /g, " ");
+
+    const statusRoll = random();
+    const status = statusRoll > 0.85 ? "exception" : statusRoll > 0.6 ? "firmed" : "planned";
+
+    result.push({ code, name: material, warehouse, qty, orderDate, reqDate, vendor, lead, status });
+  }
+  return result;
+};
+
+const plannedOrders = generatePlannedOrders();
+
+const EXCEPTION_TYPES = ["Material Shortage", "Late Delivery Risk", "BOM Missing", "Excess Stock"];
+const EXCEPTION_ACTIONS = [
+  "Place emergency PO", "Expedite with vendor", "Define BOM structure", "Reduce safety stock", "Switch to alternate vendor"
+];
+const ASSIGNEES = ["Priya S.", "Vikram T.", "Rajesh K.", "Arun M."];
+
+const generateExceptions = () => {
+  const result: any[] = [];
+  let seed = 456;
+  const random = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+
+  for (let i = 0; i < 18; i++) {
+    const isRm = random() > 0.3;
+    const materialName = isRm ? RAW_MATERIALS[Math.floor(random() * RAW_MATERIALS.length)] : PKG_MATERIALS[Math.floor(random() * PKG_MATERIALS.length)];
+    const material = `${materialName} (${isRm ? 'RM' : 'PM'}-${2000 + i})`;
+    const type = EXCEPTION_TYPES[Math.floor(random() * EXCEPTION_TYPES.length)];
+    const severity = type === "Excess Stock" ? "low" : type === "BOM Missing" ? "medium" : "high";
+    const action = EXCEPTION_ACTIONS[Math.floor(random() * EXCEPTION_ACTIONS.length)];
+    const assigned = ASSIGNEES[Math.floor(random() * ASSIGNEES.length)];
+
+    result.push({ type, material, severity, action, assigned });
+  }
+  return result;
+};
+
+const exceptions = generateExceptions();
 
 export default function MRPRun() {
   const [tab, setTab] = useState<"planned" | "exceptions" | "pegging">("planned");
@@ -77,7 +124,7 @@ export default function MRPRun() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border">
-        {([["planned", "Planned Orders (312)"], ["exceptions", "Exceptions (18)"], ["pegging", "Pegging View"]] as const).map(([key, label]) => (
+        {([["planned", `Planned Orders (${plannedOrders.length})`], ["exceptions", `Exceptions (${exceptions.length})`], ["pegging", "Pegging View"]] as const).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -114,7 +161,7 @@ export default function MRPRun() {
                 </tr>
               </thead>
               <tbody>
-                {plannedOrders.map((o, i) => (
+                {plannedOrders.slice(0, 50).map((o, i) => (
                   <tr key={i} className="border-b border-border hover:bg-secondary/30 transition-colors">
                     <td className="px-3 py-2"><input type="checkbox" className="rounded" /></td>
                     <td className="px-3 py-2 font-mono text-xs">{o.code}</td>
@@ -140,7 +187,7 @@ export default function MRPRun() {
             <button className="h-8 px-3 bg-accent text-accent-foreground rounded-md text-xs font-medium hover:opacity-90 active:scale-[0.98]">
               Firm Selected Orders
             </button>
-            <span className="text-xs text-muted-foreground">Showing 15 of 312 planned orders</span>
+            <span className="text-xs text-muted-foreground">Showing {Math.min(50, plannedOrders.length)} of {plannedOrders.length} planned orders</span>
           </div>
         </div>
       )}
